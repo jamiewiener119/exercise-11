@@ -1,0 +1,119 @@
+---
+title: "exercise-11"
+output: html_document
+date: "2024-03-25"
+---
+
+# Exercise 11: Practice ANOVA
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(mosaic)
+library(readr)
+library(skimr)
+library(broom)
+library(car)
+```
+
+## Preliminaries
+
+```{r}
+#Load "AVONETdataset1.csv" dataset as a tibble
+f <- "https://raw.githubusercontent.com/difiore/ada-2024-datasets/main/AVONETdataset1.csv"
+(d <- read_csv(f,col_names = TRUE))
+```
+
+```{r}
+#Winnow the dataset to include only the following variables: Species1, Family1, Order1, Beak.Length_Culmen, Beak.Width, Beak.Depth, Tarsus.Length, Wing.Length, Tail.Length, Mass, Habitat, Migration, Trophic.Level, Trophic.Niche, Min.Latitude, Max.Latitude, Centroid.Latitude, Primary.Lifestyle, and Range.Size
+
+(d <- d |> select("Species1","Family1","Order1","Beak.Length_Culmen","Beak.Width","Beak.Depth","Tarsus.Length","Wing.Length","Tail.Length","Mass","Habitat","Migration","Trophic.Level","Trophic.Niche","Min.Latitude","Max.Latitude","Centroid.Latitude","Primary.Lifestyle","Range.Size"))
+```
+
+```{r}
+#Exploratory data analysis
+(skim <- skim(d))
+```
+
+In the winnowed dataset, d...
+
+...the following variables (total = 12) are numeric:
+
+```{r}
+skim_num <- skim |> filter(skim_type == "numeric")
+(skim_num$skim_variable)
+```
+
+...and the following variables (total = 7) are 
+categorical:
+
+```{r}
+skim_char <- skim |> filter(skim_type == "character")
+(skim_char$skim_variable)
+```
+
+## Challenge 1: One-Factor ANOVA and Inference
+
+### Step 1
+
+Make boxplots of log(Mass) in relation to Trophic.Level and Migration behavior 
+type. For each plot, drop from the visualization all species records where the 
+categorical variable of interest is missing from the dataset.
+
+```{r}
+#Converting the variable Migration from class numeric to either being classified as a factor or as a character (string) variable.
+
+d$Migration <- as.character(d$Migration)
+
+#Checking that this worked
+(class(d$Migration))
+```
+
+```{r}
+#Dropping all species records where Trophic.Level is missing from the dataset
+d2 <- d |> drop_na("Trophic.Level")
+
+#Box plot of log(Mass) in relation to Trophic.Level 
+p1 <- ggplot(data = d2, aes(x = Trophic.Level, y = log(Mass))) +
+  geom_boxplot(na.rm = TRUE) + 
+  theme(axis.text.x = element_text(angle = 90)) + #Specifying axis labels
+  ylab("log(Mass)") + 
+  xlab("Trophic Level") 
+(p1)
+```
+
+```{r}
+#Dropping all species records where Migration is missing from the dataset
+d3 <- d |> drop_na("Migration")
+
+#Box plot of log(Mass) in relation to Migration behavior type
+p1 <- ggplot(data = d3, aes(x = Migration, y = log(Mass))) +
+  geom_boxplot(na.rm = TRUE) + 
+  theme(axis.text.x = element_text(angle = 90)) + #Specifying axis labels
+  ylab("log(Mass)") + 
+  xlab("Migration Behavior") 
+(p1)
+```
+
+### Step 2
+
+Run linear models using the lm() function to look at the relationship between log(Mass) and Trophic.Level and between log(Mass) and Migration.
+
+```{r}
+#Linear model looking at relationship between log(Mass) and Trophic.Level
+(lm1 <- lm((log(Mass)) ~ Trophic.Level, data = d2))
+```
+
+```{r}
+(summary(lm1))
+```
+
+```{r}
+#Linear model looking at relationship between log(Mass) and Migration
+(lm2 <- lm((log(Mass)) ~ Migration, data = d3))
+```
+
+```{r}
+(summary(lm2))
+```
+
